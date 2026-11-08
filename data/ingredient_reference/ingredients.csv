@@ -1,0 +1,16 @@
+﻿ingredient,category,allergen,description
+Wholegrain Rye Flour,Cereal,Gluten,Rye-based flour
+Wheat Flour,Cereal,Gluten,Wheat-based flour
+Oat Flakes,Cereal,None,Oat flakes
+Sugar,Sweetener,None,Sugar
+Sunflower Seeds,Seed,None,Sunflower seeds
+Sesame Seeds,Seed,Sesame,Sesame seeds
+Milk,Dairy,Milk,Milk ingredient
+Whey,Dairy,Milk,Milk-derived ingredient
+Whey Powder,Dairy,Milk,Milk-derived powder
+Milk Solids,Dairy,Milk,Milk-derived solids
+Soy Lecithin,Emulsifier,Soy,Soy-derived emulsifier
+Peanuts,Nut,Peanut,Peanut ingredient
+Almonds,Tree Nut,Tree Nuts,Almond ingredient
+Cashews,Tree Nut,Tree Nuts,Cashew ingredient
+Egg,Egg,Egg,Egg ingredient

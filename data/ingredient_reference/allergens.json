@@ -1,0 +1,41 @@
+
+{
+  "allergens": [
+    {
+      "name": "Milk",
+      "synonyms": ["milk", "whey", "whey powder", "milk solids", "casein", "lactose"]
+    },
+    {
+      "name": "Gluten",
+      "synonyms": ["wheat", "rye", "barley", "wheat flour", "rye flour"]
+    },
+    {
+      "name": "Soy",
+      "synonyms": ["soy", "soya", "soy lecithin", "soya lecithin"]
+    },
+    {
+      "name": "Peanut",
+      "synonyms": ["peanut", "groundnut"]
+    },
+    {
+      "name": "Tree Nuts",
+      "synonyms": ["almond", "cashew", "walnut", "pistachio", "hazelnut"]
+    },
+    {
+      "name": "Sesame",
+      "synonyms": ["sesame", "sesame seeds", "sesame oil"]
+    },
+    {
+      "name": "Egg",
+      "synonyms": ["egg", "egg white", "egg yolk", "albumin"]
+    },
+    {
+      "name": "Fish",
+      "synonyms": ["fish", "fish oil"]
+    },
+    {
+      "name": "Crustaceans",
+      "synonyms": ["crab", "prawn", "shrimp", "lobster"]
+    }
+  ]
+}

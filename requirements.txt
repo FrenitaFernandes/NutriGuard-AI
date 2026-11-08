@@ -1,0 +1,17 @@
+
+Flask
+Werkzeug
+python-dotenv
+google-genai
+Pillow
+pillow-avif-plugin
+paddleocr
+paddlepaddle
+opencv-python
+numpy
+pymupdf
+langchain
+langchain-text-splitters
+sentence-transformers
+faiss-cpu
+rank-bm25
