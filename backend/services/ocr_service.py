@@ -5,6 +5,7 @@ import tempfile
 import time
 import logging
 import hashlib
+import threading
 from copy import deepcopy
 
 import pillow_avif
@@ -15,12 +16,15 @@ from paddleocr import PaddleOCR
 logger = logging.getLogger(__name__)
 _ocr_cache = {}
 _OCR_CACHE_LIMIT = 4
+_ocr_cache_lock = threading.Lock()
+_ocr_inflight = {}
 
 
 # Keep the model lightweight for CPU-only demonstrations. The model remains
 # initialized once per Flask process and is reused for every upload.
 ocr = PaddleOCR(
-    lang="en",
+    text_detection_model_name="PP-OCRv5_mobile_det",
+    text_recognition_model_name="en_PP-OCRv5_mobile_rec",
     use_doc_orientation_classify=False,
     use_doc_unwarping=False,
     use_textline_orientation=False,
@@ -47,8 +51,8 @@ def prepare_image_for_ocr(image):
 
     if longest_side < 640:
         scale = 640 / longest_side
-    elif longest_side > 1200:
-        scale = 1200 / longest_side
+    elif longest_side > 960:
+        scale = 960 / longest_side
     else:
         scale = 1.0
 
@@ -277,15 +281,47 @@ def extract_text_from_image(image_path):
     """Extract text and label sections from a complete food image."""
 
     temp_path = None
+    image_hash = None
+    owner = False
     started = time.perf_counter()
 
     try:
         with open(image_path, "rb") as image_file:
             image_hash = hashlib.sha256(image_file.read()).hexdigest()
-        cached_result = _ocr_cache.get(image_hash)
-        if cached_result is not None:
-            logger.info("OCR cache hit in %.3fs", time.perf_counter() - started)
-            return deepcopy(cached_result)
+        with _ocr_cache_lock:
+            cached_result = _ocr_cache.get(image_hash)
+            inflight = _ocr_inflight.get(image_hash)
+            if cached_result is not None:
+                cached = deepcopy(cached_result)
+                cached["cache_hit"] = True
+                cached["timings_ms"] = {"total": round((time.perf_counter() - started) * 1000, 1)}
+                logger.info("OCR cache hit in %.3fs", time.perf_counter() - started)
+                return cached
+            if inflight is None:
+                inflight = threading.Event()
+                _ocr_inflight[image_hash] = inflight
+                owner = True
+
+        if not owner:
+            logger.info("Waiting for in-flight OCR result")
+            inflight.wait()
+            with _ocr_cache_lock:
+                cached_result = _ocr_cache.get(image_hash)
+            if cached_result is not None:
+                cached = deepcopy(cached_result)
+                cached["cache_hit"] = True
+                cached["timings_ms"] = {"total": round((time.perf_counter() - started) * 1000, 1)}
+                return cached
+            return {
+                "success": False,
+                "raw_text": "",
+                "lines": [],
+                "detections": [],
+                "sections": {},
+                "warnings": ["The shared OCR operation failed."],
+                "cache_hit": False,
+                "timings_ms": {"total": round((time.perf_counter() - started) * 1000, 1)},
+            }
 
         image_started = time.perf_counter()
         image = Image.open(image_path)
@@ -451,11 +487,20 @@ def extract_text_from_image(image_path):
                 **sections
             },
             "warnings": list(dict.fromkeys(warnings)),
-            "message": "OCR completed successfully."
+            "message": "OCR completed successfully.",
+            "cache_hit": False,
+            "timings_ms": {
+                "total": round((time.perf_counter() - started) * 1000, 1),
+                "image_load": round((image_started - started) * 1000, 1),
+                "preprocessing": round((ocr_started - preprocessing_started) * 1000, 1),
+                "inference": round((extraction_started - ocr_started) * 1000, 1),
+                "postprocessing": round((time.perf_counter() - extraction_started) * 1000, 1),
+            },
         }
-        _ocr_cache[image_hash] = result
-        while len(_ocr_cache) > _OCR_CACHE_LIMIT:
-            _ocr_cache.pop(next(iter(_ocr_cache)))
+        with _ocr_cache_lock:
+            _ocr_cache[image_hash] = result
+            while len(_ocr_cache) > _OCR_CACHE_LIMIT:
+                _ocr_cache.pop(next(iter(_ocr_cache)))
         return deepcopy(result)
 
     except Exception as e:
@@ -470,8 +515,15 @@ def extract_text_from_image(image_path):
             "sections": {},
             "warnings": [],
             "message": str(e)
+            ,"cache_hit": False,
+            "timings_ms": {"total": round((time.perf_counter() - started) * 1000, 1)}
         }
 
     finally:
         if temp_path and os.path.exists(temp_path):
             os.remove(temp_path)
+        if owner and image_hash:
+            with _ocr_cache_lock:
+                event = _ocr_inflight.pop(image_hash, None)
+                if event:
+                    event.set()

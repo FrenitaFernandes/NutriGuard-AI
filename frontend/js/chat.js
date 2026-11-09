@@ -12,7 +12,9 @@ chatForm?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const question = document.querySelector("#question").value.trim();
     if (!question) return;
-    chatOutput.innerHTML = "<p>Searching the trusted knowledge base...</p>";
+    const submitButton = chatForm.querySelector("button[type='submit']");
+    submitButton.disabled = true;
+    chatOutput.innerHTML = '<div class="chat-assistant"><strong>NutriGuard</strong><p><span class="progress-wrap"><span class="progress-dot"></span> Thinking...</span></p></div>';
     try {
         const response = await fetch("/api/chat", {
             method: "POST",
@@ -21,9 +23,11 @@ chatForm?.addEventListener("submit", async (event) => {
         });
         const data = await response.json();
         if (!response.ok || !data.success) throw Error(apiError(response, data));
-        chatOutput.innerHTML = `<div class="card"><p>${escapeHtml(data.answer).replace(/\n/g, "<br>")}</p>
-            <h3>Sources</h3>${list(data.sources?.map((source) => `${source.document}, page ${source.page}`), "No sources returned.")}</div>`;
+        chatOutput.innerHTML = `<div class="chat-assistant"><strong>NutriGuard</strong><p>${escapeHtml(data.answer).replace(/\n/g, "<br>")}</p>
+            ${data.sources?.length ? `<p class="muted">Sources: ${data.sources.map((source) => escapeHtml(`${source.document}, page ${source.page}`)).join("; ")}</p>` : ""}</div>`;
     } catch (error) {
         chatOutput.innerHTML = `<div class="status error">${escapeHtml(error.message)}</div>`;
+    } finally {
+        submitButton.disabled = false;
     }
 });

@@ -1,0 +1,92 @@
+{
+  "621": {
+    "name": "Monosodium glutamate",
+    "category": "Flavour enhancer",
+    "purpose": "Enhances savoury flavour.",
+    "synonyms": ["MSG", "monosodium glutamate"]
+  },
+  "627": {
+    "name": "Disodium guanylate",
+    "category": "Flavour enhancer",
+    "purpose": "Enhances savoury flavour, often with other flavour enhancers.",
+    "synonyms": ["disodium guanylate"]
+  },
+  "631": {
+    "name": "Disodium inosinate",
+    "category": "Flavour enhancer",
+    "purpose": "Enhances savoury flavour, often with other flavour enhancers.",
+    "synonyms": ["disodium inosinate"]
+  },
+  "330": {
+    "name": "Citric acid",
+    "category": "Acidity regulator",
+    "purpose": "Adds acidity and helps control flavour.",
+    "synonyms": ["citric acid"]
+  },
+  "322": {
+    "name": "Lecithins",
+    "category": "Emulsifier",
+    "purpose": "Helps oil and water-based ingredients mix.",
+    "synonyms": ["lecithin", "lecithins"]
+  },
+  "300": {
+    "name": "Ascorbic acid",
+    "category": "Antioxidant",
+    "purpose": "Helps protect food from oxidation.",
+    "synonyms": ["vitamin c", "ascorbic acid"]
+  },
+  "202": {
+    "name": "Potassium sorbate",
+    "category": "Preservative",
+    "purpose": "Helps slow the growth of mould and yeast.",
+    "synonyms": ["potassium sorbate"]
+  },
+  "211": {
+    "name": "Sodium benzoate",
+    "category": "Preservative",
+    "purpose": "Helps inhibit the growth of some microorganisms.",
+    "synonyms": ["sodium benzoate"]
+  },
+  "415": {
+    "name": "Xanthan gum",
+    "category": "Thickener and stabiliser",
+    "purpose": "Thickens food and helps keep its texture consistent.",
+    "synonyms": ["xanthan gum"]
+  },
+  "407": {
+    "name": "Carrageenan",
+    "category": "Thickener and stabiliser",
+    "purpose": "Helps thicken and stabilise food.",
+    "synonyms": ["carrageenan"]
+  },
+  "440": {
+    "name": "Pectin",
+    "category": "Gelling agent",
+    "purpose": "Helps form or maintain a gel structure.",
+    "synonyms": ["pectin"]
+  },
+  "500": {
+    "name": "Sodium carbonates",
+    "category": "Raising agent",
+    "purpose": "Helps dough or batter rise.",
+    "synonyms": ["sodium carbonate", "sodium bicarbonate", "baking soda"]
+  },
+  "501": {
+    "name": "Potassium carbonates",
+    "category": "Raising agent",
+    "purpose": "Helps dough or batter rise.",
+    "synonyms": ["potassium carbonate"]
+  },
+  "950": {
+    "name": "Acesulfame potassium",
+    "category": "Sweetener",
+    "purpose": "Provides sweetness with little or no energy contribution.",
+    "synonyms": ["acesulfame k", "acesulfame potassium"]
+  },
+  "955": {
+    "name": "Sucralose",
+    "category": "Sweetener",
+    "purpose": "Provides sweetness with little or no energy contribution.",
+    "synonyms": ["sucralose"]
+  }
+}

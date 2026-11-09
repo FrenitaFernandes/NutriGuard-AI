@@ -1,1 +1,30 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Home / Scan · NutriGuard AI</title><link rel="stylesheet" href="/css/style.css"></head><body><nav class="nav"><a class="brand" href="/">NutriGuard AI</a><a href="/upload.html">Home / Scan</a><a href="/analysis.html">Food Analysis</a><a href="/chat.html">AI Assistant</a></nav><main class="container"><h1>Scan a food label</h1><p class="muted">Upload the complete label to understand ingredients, additives and allergen declarations. Choosing allergies is optional.</p><form id="upload-form" class="card"><label for="image">Label image</label><input id="image" name="image" type="file" accept=".jpg,.jpeg,.png,.webp,.avif,image/*" required><img id="preview" alt="Selected label preview" hidden style="max-width:100%;max-height:280px;margin-top:1rem;border-radius:8px"><label for="allergies">Your allergies <span class="muted">(optional, comma separated)</span></label><input id="allergies" name="allergies" placeholder="e.g. milk, peanut, sesame"><p class="hint">Leave this blank for a general label explanation. Personal alerts appear only when allergies are selected.</p><button type="submit">Analyze label</button><div id="status" class="status">Ready.</div></form><section class="card" style="margin-top:1rem"><h2>Camera capture</h2><video id="camera-video" autoplay playsinline style="width:100%;max-height:300px;background:#17212b;border-radius:8px"></video><p id="camera-status" class="status">Allow camera access to capture a label.</p><button type="button" id="start-camera">Start camera</button> <button type="button" id="capture" class="button secondary">Capture</button></section></main><script src="/js/main.js"></script><script src="/js/upload.js"></script><script src="/js/camera.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Scan a label · NutriGuard AI</title><link rel="stylesheet" href="/css/style.css"></head>
+<body>
+<nav class="nav"><a class="brand" href="/"><span class="brand-mark" aria-hidden="true">N</span>NutriGuard AI</a><a class="nav-link active" href="/upload.html">Scan</a><a class="nav-link" href="/analysis.html">Dashboard</a><a class="nav-cta" href="/">Home</a></nav>
+<main class="container">
+    <div class="page-heading"><span class="eyebrow">Start with a label</span><h1>Scan your food label.</h1><p class="lead">Upload a clear image or PDF, or use your camera. We’ll turn the label into a concise, useful analysis.</p></div>
+    <div class="upload-layout">
+        <form id="upload-form" class="card">
+            <div class="drop-zone" id="drop-zone">
+                <div><div class="drop-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 16V4m0 0L8 8m4-4 4 4"/><path d="M5 14v5h14v-5"/></svg></div><h2>Drop your label here</h2><p class="muted">or choose a file from your device</p><label for="image" class="button secondary">Choose file</label><input id="image" name="image" type="file" accept=".jpg,.jpeg,.png,.webp,.avif,.pdf,image/*,application/pdf" required><p class="hint">JPG, JPEG, PNG, WebP or PDF · up to your device’s supported size</p></div>
+            </div>
+            <div id="selected-file" class="status" hidden></div>
+            <div class="preview-frame"><img id="preview" alt="Selected label preview" hidden></div>
+            <label for="allergies">Allergies <span class="muted">(optional)</span></label><input id="allergies" name="allergies" placeholder="e.g. milk, peanut, sesame">
+            <p class="hint">Choose allergies only if useful. Alerts are cautious and never prove a product is safe.</p>
+            <button type="submit">Analyze this label <span aria-hidden="true">→</span></button>
+            <div id="status" class="status" role="status">Ready when you are.</div>
+        </form>
+        <section class="card" id="camera">
+            <span class="eyebrow">Camera scan</span><h2>Capture from your camera.</h2><p class="muted">Use good light and keep the label flat and in focus.</p>
+            <div class="camera-shell"><video id="camera-video" autoplay playsinline></video><div class="camera-controls"><button type="button" id="start-camera">Start camera</button><button type="button" id="capture" class="secondary">Capture</button><button type="button" id="retake" class="secondary">Retake</button><button type="button" id="stop-camera" class="secondary">Stop</button></div></div>
+            <p id="camera-status" class="status">Camera is off.</p>
+        </section>
+    </div>
+</main>
+<footer class="footer">Your label stays private to your current session.</footer>
+<script src="/js/main.js"></script><script src="/js/upload.js"></script><script src="/js/camera.js"></script>
+</body>
+</html>

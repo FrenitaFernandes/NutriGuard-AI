@@ -10,6 +10,7 @@ __pycache__/
 # Generated files
 data/faiss_index/
 data/uploads/
+data/nutriguard.db
 
 # IDE
 .vscode/

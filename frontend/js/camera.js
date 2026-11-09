@@ -7,6 +7,17 @@ function stopCamera() {
     cameraStream = undefined;
 }
 
+document.querySelector("#stop-camera")?.addEventListener("click", () => {
+    stopCamera();
+    cameraStatus.textContent = "Camera stopped.";
+});
+
+document.querySelector("#retake")?.addEventListener("click", () => {
+    document.querySelector("#image").value = "";
+    document.querySelector("#preview").hidden = true;
+    cameraStatus.textContent = "Ready for another capture.";
+});
+
 document.querySelector("#start-camera")?.addEventListener("click", async () => {
     if (!navigator.mediaDevices?.getUserMedia) {
         cameraStatus.textContent = "Camera capture is not supported on this device.";

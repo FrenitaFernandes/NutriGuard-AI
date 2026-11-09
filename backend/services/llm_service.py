@@ -1,146 +1,181 @@
-
 import os
+import re
+
 from dotenv import load_dotenv
 from google import genai
 
 from backend.rag.retriever import search_documents
 
-# Load environment variables
+
 load_dotenv()
 
-# Initialize Gemini
 api_key = os.getenv("GEMINI_API_KEY")
 client = None
 
 if api_key:
     client = genai.Client(
         api_key=api_key,
-        http_options={"timeout": 120000}
+        http_options={"timeout": 120000},
     )
     print("Gemini client initialized successfully!")
 else:
     print("Gemini API key not found!")
 
 
-# RAG question-answering function
-def answer_question(question, top_k=5, product_context=None):
+REGULATORY_TERMS = {
+    "fssai", "jecfa", "regulation", "regulatory", "standard", "standards",
+    "legal", "legally", "permitted", "permissible", "labelling", "labeling",
+    "declaration", "compliance", "limit", "limits", "food safety",
+}
+PRODUCT_TERMS = {
+    "this", "product", "label", "scanned", "contains", "ingredient",
+    "ingredients", "allergen", "allergens", "serving", "nutrition",
+}
+STOP_WORDS = {
+    "what", "is", "are", "the", "a", "an", "of", "in", "for", "to", "and",
+    "or", "with", "does", "do", "how", "why", "tell", "me", "about",
+}
+OFFICIAL_SOURCE_LINKS = {
+    "food_additives.pdf": "https://www.fssai.gov.in/cms/food-safety-and-standards-regulations.php",
+    "packaging_labelling.pdf": "https://www.fssai.gov.in/cms/food-safety-and-standards-regulations.php",
+    "jecfa_compendium_2025.pdf": "https://apps.who.int/food-additives-contaminants-jecfa-database/",
+}
 
-    if client is None:
-        return {
-            "answer": "Gemini client is not initialized.",
-            "sources": []
+
+def _tokens(text):
+    return {
+        token for token in re.findall(r"[a-z0-9]+", (text or "").lower())
+        if token not in STOP_WORDS and len(token) > 2
+    }
+
+
+def classify_question(question, product_context=None):
+    """Choose the evidence policy without asking the model to classify itself."""
+    question_tokens = _tokens(question)
+    if question_tokens & REGULATORY_TERMS:
+        return "regulatory"
+    if isinstance(product_context, dict) and question_tokens & PRODUCT_TERMS:
+        return "product"
+    return "general"
+
+
+def _relevant_results(question, results):
+    query_tokens = _tokens(question)
+    relevant = []
+    for result in results:
+        document_tokens = _tokens(result.get("text", ""))
+        overlap = query_tokens & document_tokens
+        semantic_score = result.get("semantic_score")
+        if overlap or (semantic_score is not None and semantic_score >= 0.62):
+            relevant.append(result)
+    return relevant
+
+
+def _document_context(question, top_k):
+    candidates = search_documents(question, top_k=top_k)
+    results = _relevant_results(question, candidates)
+    sources = []
+    context_parts = []
+    for number, result in enumerate(results, start=1):
+        metadata = result["metadata"]
+        document = metadata["source"]
+        source = {
+            "type": "document",
+            "document": document,
+            "page": metadata["page"],
+            "url": OFFICIAL_SOURCE_LINKS.get(document),
         }
+        if source not in sources:
+            sources.append(source)
+        context_parts.append(
+            f"Document evidence {number}: {document}, page {metadata['page']}\n"
+            f"{result['text']}"
+        )
+    return "\n\n---\n\n".join(context_parts), sources
+
+
+def answer_question(
+    question,
+    top_k=5,
+    product_context=None,
+    conversation_history=None,
+):
+    if client is None:
+        return {"error": "The AI assistant is not configured.", "sources": []}
 
     try:
-        # Step 1: Retrieve relevant chunks from FAISS
-        print("\nSearching FAISS database...")
-
-        results = search_documents(question, top_k=top_k)
-
-        if not results:
-            return {
-                "answer": "No relevant information was found in the knowledge base.",
-                "sources": []
-            }
-
-        # Step 2: Prepare context for Gemini
+        mode = classify_question(question, product_context)
         context = ""
         sources = []
+        if mode == "regulatory":
+            context, sources = _document_context(question, top_k)
 
-        for i, result in enumerate(results, start=1):
-
-            metadata = result["metadata"]
-
-            source = {
-                "document": metadata["source"],
-                "page": metadata["page"]
-            }
-
-            if source not in sources:
-                sources.append(source)
-
-            context += f"""
-            Source {i}: {metadata['source']}
-            Page: {metadata['page']}
-
-            Content:
-            {result['text']}
-
-            -------------------------
-            """
-
-        # Step 3: Create RAG prompt
-        product_context_text = ""
+        product_context_text = "No scanned product is currently available."
         if isinstance(product_context, dict):
-            product_context_text = f"""
-PRODUCT CURRENTLY BEING DISCUSSED:
-{product_context}
+            product_context_text = (
+                "PRODUCT LABEL FACTS (use only what is explicitly present):\n"
+                f"{product_context}"
+            )
 
-Use this product information for product-specific questions. Do not invent
-ingredients or allergen findings that are not present in it.
-"""
+        history_text = "No earlier conversation."
+        if conversation_history:
+            history_text = "\n".join(
+                f"{item.get('role', 'user')}: {item.get('content', '')}"
+                for item in conversation_history[-10:]
+            )
 
+        evidence_text = context or "No relevant regulatory document evidence was retrieved."
         prompt = f"""
-You are NutriGuard AI, a food ingredient information assistant.
+You are NutriGuard AI, a concise food-label assistant.
 
-Answer the user's question using ONLY the provided reference context.
+Answer naturally in a short conversational response. Do not use unnecessary
+headings, asterisks, or technical language. Never invent quantities, product
+facts, health claims, or citations. If a quantity is not in the label facts,
+say it is not available.
 
-Instructions:
-1. Give a clear and simple explanation.
-2. Do not invent facts or unsupported health claims.
-3. If the context does not contain the answer, clearly say that
-   the available documents do not provide enough information.
-4. Do not treat similarity scores as scientific evidence.
-5. Mention relevant document names and page numbers.
-6. Distinguish regulatory information from health or safety evidence.
-7. For regulatory questions, rely on the supplied FSSAI and JECFA documents
-   and cite the source document and page in the answer.
+Question type: {mode}
 
-REFERENCE CONTEXT:
-{context}
+Evidence rules:
+- PRODUCT LABEL FACTS are facts extracted from the current user's scanned label.
+- DOCUMENT EVIDENCE is only relevant for regulatory questions. Cite its exact
+  document name and page when you use it.
+- GENERAL AI KNOWLEDGE may answer ordinary food, ingredient, additive, and
+  nutrition questions, but distinguish it from label facts.
+- Do not use unrelated document evidence. Do not claim that a local PDF proves
+  a medical or health outcome.
+- If reliable external information is needed, say that an external source is
+  needed. Do not fabricate a URL. Official document links are returned
+  separately as sources.
+
 {product_context_text}
+
+CONVERSATION HISTORY:
+{history_text}
+
+RELEVANT DOCUMENT EVIDENCE:
+{evidence_text}
 
 USER QUESTION:
 {question}
-
-Provide a helpful and factual answer.
 """
-
-        # Step 4: Generate answer using Gemini
-        print("Generating answer using Gemini...")
 
         response = client.models.generate_content(
             model="gemini-3.5-flash-lite",
-            contents=prompt
+            contents=prompt,
         )
-
         return {
-            "answer": response.text,
-            "sources": sources
+            "answer": response.text.strip(),
+            "sources": sources,
+            "mode": mode,
+            "provenance": {
+                "product_facts": bool(product_context),
+                "document_evidence": bool(context),
+                "general_knowledge": mode in {"general", "product"},
+            },
         }
-
-    except Exception as error:
-        print("RAG error:", error)
-
+    except Exception:
+        print("RAG/LLM error")
         return {
-            "answer": f"Unable to generate an answer: {error}",
-            "sources": []
+            "error": "The AI assistant could not generate a response.",
+            "sources": [],
         }
-
-
-# Test RAG pipeline
-if __name__ == "__main__":
-
-    question = "What is monosodium glutamate (MSG), and why is it used in food?"
-
-    result = answer_question(question)
-
-    print("\n========== NUTRIGUARD AI ANSWER ==========")
-    print(result["answer"])
-
-    print("\n========== SOURCES ==========")
-
-    for source in result["sources"]:
-        print(f"Document: {source['document']}")
-        print(f"Page: {source['page']}")
-        print("-------------------------")

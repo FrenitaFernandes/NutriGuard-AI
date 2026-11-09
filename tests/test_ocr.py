@@ -1,4 +1,7 @@
 import unittest
+import tempfile
+from pathlib import Path
+from unittest.mock import patch
 
 from backend.services.ocr_service import (
     extract_sections_from_detections,
@@ -27,6 +30,32 @@ class OcrSectionTests(unittest.TestCase):
         self.assertIn("Wheat flour", sections["ingredients"])
         self.assertEqual(sections["contains"], "wheat")
         self.assertEqual(sections["may_contain"], "sesame")
+
+    def test_ocr_cache_reports_cache_hit_and_timing(self):
+        from backend.services import ocr_service
+
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "label.png"
+            path.write_bytes(b"test-image")
+            fake = {
+                "success": True,
+                "raw_text": "INGREDIENTS: wheat",
+                "lines": ["INGREDIENTS: wheat"],
+                "detections": [],
+                "warnings": [],
+                "sections": {"ingredients": "wheat"},
+                "image_width": 10,
+                "image_height": 10,
+            }
+            ocr_service._ocr_cache.clear()
+            with patch.object(
+                ocr_service, "_ocr_cache", { "hash": fake }
+            ):
+                with patch("hashlib.sha256") as digest:
+                    digest.return_value.hexdigest.return_value = "hash"
+                    result = ocr_service.extract_text_from_image(path)
+            self.assertTrue(result["cache_hit"])
+            self.assertIn("total", result["timings_ms"])
 
 
 if __name__ == "__main__":

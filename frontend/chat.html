@@ -1,1 +1,14 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AI Assistant · NutriGuard AI</title><link rel="stylesheet" href="/css/style.css"></head><body><nav class="nav"><a class="brand" href="/">NutriGuard AI</a><a href="/upload.html">Home / Scan</a><a href="/analysis.html">Food Analysis</a><a href="/chat.html">AI Assistant</a></nav><main class="container"><h1>AI assistant</h1><p class="muted">Ask general food questions or ask about the product you just analyzed. Regulatory answers use the local FSSAI and JECFA documents and show their sources.</p><div id="product-context" class="status" hidden></div><form id="chat-form" class="card"><label for="question">Your question</label><textarea id="question" placeholder="What does INS 621 do, or is this product suitable for my question?"></textarea><button type="submit">Ask the assistant</button></form><div id="chat-output" style="margin-top:1rem"></div></main><script src="/js/main.js"></script><script src="/js/chat.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AI assistant · NutriGuard AI</title><link rel="stylesheet" href="/css/style.css"></head>
+<body>
+<nav class="nav"><a class="brand" href="/"><span class="brand-mark" aria-hidden="true">N</span>NutriGuard AI</a><a class="nav-link" href="/upload.html">Scan</a><a class="nav-link" href="/analysis.html">Dashboard</a><a class="nav-cta" href="/analysis.html">Back to product</a></nav>
+<main class="container">
+    <div class="page-heading"><span class="eyebrow">NutriGuard AI</span><h1>Your food questions, answered.</h1><p class="lead">Ask about ingredients, nutrition or the product you just scanned. For product-specific follow-ups, the dashboard assistant keeps the product context with you.</p></div>
+    <div id="product-context" class="status" hidden></div>
+    <section class="card chat-card"><div class="chat-header"><span class="chat-avatar" aria-hidden="true">✦</span><div><h2>AI food assistant</h2><p class="muted">Simple answers, with sources when relevant.</p></div></div><div id="chat-output" class="chat-messages"></div><form id="chat-form" class="chat-composer"><textarea id="question" placeholder="Ask a food or nutrition question..." aria-label="Your question"></textarea><button type="submit">Send <span aria-hidden="true">→</span></button></form></section>
+</main>
+<footer class="footer">AI answers are for awareness and review; not medical advice.</footer>
+<script src="/js/main.js"></script><script src="/js/chat.js"></script>
+</body>
+</html>
